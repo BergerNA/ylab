@@ -4,83 +4,20 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.OptionalInt;
 
+import static java.lang.System.out;
+
 public class Main {
 
     private static final int[] TASK_ARRAY = new int[]{5, 6, 3, 2, 5, 1, 4, 9};
 
     public static void main(String[] args) {
-        System.out.print("Unsorted task array: ");
-        System.out.println(Arrays.toString(TASK_ARRAY));
-        System.out.print("  Sorted task array: ");
-        System.out.println(Arrays.toString(RadixSort.sort(TASK_ARRAY)));
-        System.out.println();
-        testSortEmptyArray();
-        testSortArrayWithOneItem();
-        testSortArrayWithIntegerMaxItem();
-        testSortArrayWithIntegerMinItem();
-        testSortArrayWithIntegerMaxAndMinItems();
-        testSortRandomArrayWithIntegerMaxAndMin();
-        testSortRandomArrayWithoutIntegerMaxAndMin();
-        testSortArrayWithIntegerMaxAndMinItemsDuplicates();
-    }
+        out.print("Unsorted task array: ");
+        out.println(Arrays.toString(TASK_ARRAY));
+        out.print("  Sorted task array: ");
+        out.println(Arrays.toString(RadixSort.sort(TASK_ARRAY)));
+        out.println();
 
-    private static void testSortEmptyArray() {
-        int[] emptyArray = new int[]{};
-        int[] sortedArray = RadixSort.sort(emptyArray);
-        int[] expectedArray = new int[]{};
-        assert Arrays.equals(expectedArray, sortedArray);
-    }
-
-    private static void testSortArrayWithOneItem() {
-        int[] unsortedArray = new int[]{0};
-        int[] sortedArray = RadixSort.sort(unsortedArray);
-        int[] expectedArray = new int[]{0};
-        assert Arrays.equals(expectedArray, sortedArray);
-    }
-
-    private static void testSortArrayWithIntegerMaxItem() {
-        int[] unsortedArray = new int[]{Integer.MAX_VALUE};
-        int[] sorted = RadixSort.sort(unsortedArray);
-        int[] expectedArray = new int[]{Integer.MAX_VALUE};
-        assert Arrays.equals(expectedArray, sorted);
-    }
-
-    private static void testSortArrayWithIntegerMinItem() {
-        int[] unsortedArray = new int[]{Integer.MIN_VALUE};
-        int[] sorted = RadixSort.sort(unsortedArray);
-        int[] expectedArray = new int[]{Integer.MIN_VALUE};
-        assert Arrays.equals(expectedArray, sorted);
-    }
-
-    private static void testSortArrayWithIntegerMaxAndMinItems() {
-        int[] unsortedArray = new int[]{Integer.MAX_VALUE, Integer.MIN_VALUE};
-        int[] expectedArray = new int[]{Integer.MIN_VALUE, Integer.MAX_VALUE};
-        int[] sorted = RadixSort.sort(unsortedArray);
-        assert Arrays.equals(sorted, expectedArray);
-    }
-
-    private static void testSortRandomArrayWithIntegerMaxAndMin() {
-        int[] unsortedArray = new int[]{1, -2, Integer.MIN_VALUE, -6, 8, 0, 0, Integer.MAX_VALUE, 0, -22};
-        int[] expectedArray = new int[]{Integer.MIN_VALUE, -22, -6, -2, 0, 0, 0, 1, 8, Integer.MAX_VALUE};
-        int[] sorted = RadixSort.sort(unsortedArray);
-        System.out.println("Test example output:");
-        System.out.println(Arrays.toString(unsortedArray));
-        System.out.println(Arrays.toString(sorted));
-        assert Arrays.equals(expectedArray, sorted);
-    }
-
-    private static void testSortRandomArrayWithoutIntegerMaxAndMin() {
-        int[] unsortedArray = new int[]{1, -2, -6, 8, 0, 0, 0, -22};
-        int[] expectedArray = new int[]{-22, -6, -2, 0, 0, 0, 1, 8};
-        int[] sorted = RadixSort.sort(unsortedArray);
-        assert Arrays.equals(sorted, expectedArray);
-    }
-
-    private static void testSortArrayWithIntegerMaxAndMinItemsDuplicates() {
-        int[] unsortedArray = new int[]{Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE};
-        int[] expectedArray = new int[]{Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE};
-        int[] sorted = RadixSort.sort(unsortedArray);
-        assert Arrays.equals(sorted, expectedArray);
+        TestRadixSort.runTest();
     }
 
     /**
@@ -95,36 +32,30 @@ public class Main {
             if (array.length == 0) {
                 return array;
             }
+            int significantBitCount = significantBitsInNumber(getNumberWithMaxSignificantBit(array));
 
-            int indexOfMaxBitSignificant = significantBitsInNumber(getAbsMax(array));
-
-            for (int bitIndex = 0; bitIndex < indexOfMaxBitSignificant; bitIndex++) {
+            for (int bitIndex = 0; bitIndex < significantBitCount; bitIndex++) {
                 array = countingSort(array, bitIndex);
             }
             return offsetNegativeTailToTop(array);
         }
 
         private static int significantBitsInNumber(int num) {
-            if (num == Integer.MAX_VALUE) {
-                return 32;
-            }
-            int maxSignificantBitIndex = 0;
-            for (int i = 0; i < 31; i++) {
+            int significantBitCount = 0;
+            for (int i = 0; i < 32; i++) {
                 if (bitValue(num, i) == 1) {
-                    maxSignificantBitIndex = i;
+                    significantBitCount = i;
                 }
             }
-            return ++maxSignificantBitIndex;
+            return ++significantBitCount;
         }
 
-        private static int getAbsMax(final int[] array) {
-            int max = Integer.MIN_VALUE;
+        private static int getNumberWithMaxSignificantBit(final int[] array) {
+            int maxBitsNumber = 0;
             for (int i : array) {
-                if ((i < 0 ? -i : i) >= max) {
-                    max = i < 0 ? -i : i;
-                }
+                maxBitsNumber |= i;
             }
-            return max;
+            return maxBitsNumber;
         }
 
         private static int[] countingSort(final int[] array, int bitIndex) {
@@ -197,6 +128,96 @@ public class Main {
             return indexOfFirstNegativeItem >= array.length ?
                     OptionalInt.empty() :
                     OptionalInt.of(indexOfFirstNegativeItem);
+        }
+    }
+
+    private static class TestRadixSort {
+
+        private static void runTest() {
+            testSortEmptyArray();
+            testSortArrayWithOneItem();
+            testSortArrayWithIntegerMaxItem();
+            testSortArrayWithIntegerMinItem();
+            testSortArrayWithIntegerMaxAndMinItems();
+            testSortRandomArrayWithIntegerMaxAndMin();
+            testSortRandomArrayWithoutIntegerMaxAndMin();
+            testSortArrayWithIntegerMaxAndMinItemsDuplicates();
+            testSortArrayAllNegativeItems();
+            testSortArrayOfEdgeIntVales();
+        }
+
+        private static void testSortEmptyArray() {
+            int[] emptyArray = new int[]{};
+            int[] sortedArray = RadixSort.sort(emptyArray);
+            int[] expectedArray = new int[]{};
+            assert Arrays.equals(expectedArray, sortedArray);
+        }
+
+        private static void testSortArrayWithOneItem() {
+            int[] unsortedArray = new int[]{0};
+            int[] sortedArray = RadixSort.sort(unsortedArray);
+            int[] expectedArray = new int[]{0};
+            assert Arrays.equals(expectedArray, sortedArray);
+        }
+
+        private static void testSortArrayWithIntegerMaxItem() {
+            int[] unsortedArray = new int[]{Integer.MAX_VALUE};
+            int[] sorted = RadixSort.sort(unsortedArray);
+            int[] expectedArray = new int[]{Integer.MAX_VALUE};
+            assert Arrays.equals(expectedArray, sorted);
+        }
+
+        private static void testSortArrayWithIntegerMinItem() {
+            int[] unsortedArray = new int[]{Integer.MIN_VALUE};
+            int[] sorted = RadixSort.sort(unsortedArray);
+            int[] expectedArray = new int[]{Integer.MIN_VALUE};
+            assert Arrays.equals(expectedArray, sorted);
+        }
+
+        private static void testSortArrayWithIntegerMaxAndMinItems() {
+            int[] unsortedArray = new int[]{Integer.MAX_VALUE, Integer.MIN_VALUE};
+            int[] expectedArray = new int[]{Integer.MIN_VALUE, Integer.MAX_VALUE};
+            int[] sorted = RadixSort.sort(unsortedArray);
+            assert Arrays.equals(sorted, expectedArray);
+        }
+
+        private static void testSortRandomArrayWithIntegerMaxAndMin() {
+            int[] unsortedArray = new int[]{1, -2, Integer.MIN_VALUE, -6, 8, 0, 0, Integer.MAX_VALUE, 0, -22};
+            int[] expectedArray = new int[]{Integer.MIN_VALUE, -22, -6, -2, 0, 0, 0, 1, 8, Integer.MAX_VALUE};
+            int[] sorted = RadixSort.sort(unsortedArray);
+            out.println("Test example output:");
+            out.println(Arrays.toString(unsortedArray));
+            out.println(Arrays.toString(sorted));
+            assert Arrays.equals(expectedArray, sorted);
+        }
+
+        private static void testSortRandomArrayWithoutIntegerMaxAndMin() {
+            int[] unsortedArray = new int[]{1, -2, -6, 8, 0, 0, 0, -22};
+            int[] expectedArray = new int[]{-22, -6, -2, 0, 0, 0, 1, 8};
+            int[] sorted = RadixSort.sort(unsortedArray);
+            assert Arrays.equals(sorted, expectedArray);
+        }
+
+        private static void testSortArrayAllNegativeItems() {
+            int[] unsortedArray = new int[]{-7, -2, -6, Integer.MIN_VALUE, -2, -22};
+            int[] expectedArray = new int[]{Integer.MIN_VALUE, -22, -7, -6, -2, -2};
+            int[] sorted = RadixSort.sort(unsortedArray);
+
+            assert Arrays.equals(sorted, expectedArray);
+        }
+
+        private static void testSortArrayWithIntegerMaxAndMinItemsDuplicates() {
+            int[] unsortedArray = new int[]{Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE};
+            int[] expectedArray = new int[]{Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE};
+            int[] sorted = RadixSort.sort(unsortedArray);
+            assert Arrays.equals(sorted, expectedArray);
+        }
+
+        private static void testSortArrayOfEdgeIntVales() {
+            int[] unsortedArray = new int[]{Integer.MAX_VALUE - 2, Integer.MIN_VALUE + 1, Integer.MAX_VALUE - 1, Integer.MIN_VALUE};
+            int[] expectedArray = new int[]{Integer.MIN_VALUE, Integer.MIN_VALUE + 1, Integer.MAX_VALUE - 2, Integer.MAX_VALUE - 1};
+            int[] sorted = RadixSort.sort(unsortedArray);
+            assert Arrays.equals(sorted, expectedArray);
         }
     }
 }
