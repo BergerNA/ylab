@@ -121,9 +121,8 @@ public class ComplexExamples {
 
         out.println("Task1:\n");
 
-        BiConsumer<String, Integer> namesCounterPrinterTemplate = (firstname, firstnamesCount) ->
-                out.format("Key: %s%nValue:%d%n", firstname, firstnamesCount);
-        countGroupedNames(RAW_DATA).forEach(namesCounterPrinterTemplate);
+        countGroupedNames(RAW_DATA).forEach((name, quantityByName) ->
+                out.format("Key: %s%nValue:%d%n", name, quantityByName));
 
         /*
         Task2
@@ -135,7 +134,12 @@ public class ComplexExamples {
 
         final int[] taskArray = new int[]{3, 4, 2, 7};
         final int taskRequireSum = 10;
-        out.println(Arrays.toString(findFirstPairNumberGivingRequiredSum(taskArray, taskRequireSum)));
+
+        out.println(findFirstPairNumberGivingRequiredSum(taskArray, taskRequireSum)
+                .stream()
+                .map(Arrays::toString)
+                .findAny()
+                .orElseGet(() -> "There are no pairs of numbers in the array that gives a required sum."));
 
         FindFirstPairNumberGivingRequiredSumTest.runTest();
 
@@ -177,29 +181,23 @@ public class ComplexExamples {
         Arrays.stream(objects).forEach(Objects::requireNonNull);
     }
 
-    /**
-     * @return an array of two numbers in the sum of which gives a given amount
-     * @throws IllegalArgumentException if the {@code ints}
-     *                                  array does not contain a pair of numbers
-     *                                  giving a given number in total.
-     */
-    private static int[] findFirstPairNumberGivingRequiredSum(final int[] ints, final int requiredSum) {
+    private static Optional<int[]> findFirstPairNumberGivingRequiredSum(final int[] ints, final int requiredSum) {
         requireNonNull(ints);
-        final Set<Integer> suitableNumbersUpToRequiredSum = new HashSet<>();
-        final int foundNumber = Arrays.stream(ints)
-                .dropWhile(num -> {
-                    boolean isSuitableNumber = suitableNumbersUpToRequiredSum.contains(num);
-                    suitableNumbersUpToRequiredSum.add(requiredSum - num);
-                    return !isSuitableNumber;
-                })
-                .findFirst()
-                .orElseThrow(IllegalArgumentException::new);
-        return new int[]{requiredSum - foundNumber, foundNumber};
+        final Set<Integer> numbersGivingRequiredSum = new HashSet<>();
+
+        for (int anInt : ints) {
+            if (numbersGivingRequiredSum.contains(anInt)) {
+                return Optional.of(new int[]{requiredSum - anInt, anInt});
+            }
+            numbersGivingRequiredSum.add(requiredSum - anInt);
+        }
+        return Optional.empty();
     }
 
     private static boolean fuzzySearch(final String searchingSuffix, final String expression) {
         requireNonNull(searchingSuffix, expression);
         final AtomicInteger lastFoundCharIndex = new AtomicInteger(0);
+
         return searchingSuffix.chars()
                 .dropWhile(ch -> {
                     lastFoundCharIndex.set(expression.indexOf(ch, lastFoundCharIndex.get()));
@@ -214,7 +212,9 @@ public class ComplexExamples {
         private static void runTest() {
             final int requiredSum = 10;
             BiPredicate<int[], int[]> pairFinderTest = (givenArray, expectedArray) ->
-                    Arrays.equals(findFirstPairNumberGivingRequiredSum(givenArray, requiredSum), expectedArray);
+                    Arrays.equals(
+                            findFirstPairNumberGivingRequiredSum(givenArray, requiredSum).orElseGet(() -> new int[]{}),
+                            expectedArray);
 
             assert pairFinderTest.test(new int[]{3, 4, 2, 7}, new int[]{3, 7});
             assert pairFinderTest.test(new int[]{2, 5, 8}, new int[]{2, 8});
@@ -223,8 +223,8 @@ public class ComplexExamples {
             assert pairFinderTest.test(new int[]{5, 2, 5, 8}, new int[]{5, 5});
             assert pairFinderTest.test(new int[]{5, 5, 2, 8}, new int[]{5, 5});
             assert pairFinderTest.test(new int[]{2, 8, 5, 5}, new int[]{2, 8});
-            assert pairFinderTest.test(new int[]{2, 8, 5, 5}, new int[]{2, 8});
             assert pairFinderTest.test(new int[]{8, 2, 5, 5}, new int[]{8, 2});
+            assert pairFinderTest.test(new int[]{8, 1, 3, 5}, new int[]{});
         }
     }
 
@@ -241,10 +241,7 @@ public class ComplexExamples {
             assert fuzzySearch("a", "ba");
             assert fuzzySearch("a", "ab");
             assert !fuzzySearch("a", "b");
-            assert !fuzzySearch("A", "Ba");
-            assert !fuzzySearch("A", "aB");
-            assert fuzzySearch("A", "Ab");
-            assert fuzzySearch("A", "bA");
+            assert !fuzzySearch("a", "  ");
             assert !fuzzySearch("a", "");
             assert fuzzySearch("", "a");
         }
